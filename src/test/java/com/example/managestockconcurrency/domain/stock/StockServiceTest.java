@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.*;
 import com.example.managestockconcurrency.domain.stock.entiry.Stock;
 import com.example.managestockconcurrency.domain.stock.facade.StockLettuceLockFacade;
 import com.example.managestockconcurrency.domain.stock.facade.StockOptimisticLockFacade;
+import com.example.managestockconcurrency.domain.stock.facade.StockRedissonLockFacade;
 import com.example.managestockconcurrency.domain.stock.repository.StockRepository;
 import com.example.managestockconcurrency.domain.stock.service.StockService;
 import java.util.concurrent.CountDownLatch;
@@ -24,6 +25,7 @@ class StockServiceTest {
 	@Autowired private StockService stockService;
 	@Autowired private StockOptimisticLockFacade stockOptimisticLockFacade;
 	@Autowired private StockLettuceLockFacade stockLettuceLockFacade;
+	@Autowired private StockRedissonLockFacade stockRedissonLockFacade;
 
 	@Autowired StockRepository stockRepository;
 
@@ -171,6 +173,34 @@ class StockServiceTest {
 		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
 					try {
 						stockLettuceLockFacade.decreaseV5(productId, quantity);
+					} catch (final InterruptedException ex) {
+						throw new RuntimeException(ex);
+					} finally {
+						countDownLatch.countDown();
+					}
+				}
+		));
+
+		countDownLatch.await();
+
+		// then
+		final Long afterQuantity = stockRepository.getByProductId(productId).getQuantity();
+		System.out.println("### afterQuantity=" + afterQuantity);
+		assertThat(afterQuantity).isZero();
+	}
+
+	@DisplayName("[v6] 재고 감소 - 동시에 100개 요청")
+	@Test
+	void stock_decreaseV6() throws InterruptedException {
+		// given
+		final int threadCount = 100;
+		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+		// when
+		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+					try {
+						stockRedissonLockFacade.decreaseV6(productId, quantity);
 					} catch (final InterruptedException ex) {
 						throw new RuntimeException(ex);
 					} finally {
