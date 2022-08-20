@@ -18,4 +18,13 @@ public class StockService {
 		final Stock stock = stockRepository.getByProductId(productId);
 		stock.decrease(quantity);
 	}
+
+	/**
+	 * [v2] 재고 감소 - syncronized
+	 */
+	public synchronized void decreaseV2(final Long productId, final Long quantity) {
+		final Stock stock = stockRepository.getByProductId(productId);
+		stock.decrease(quantity);
+		stockRepository.saveAndFlush(stock);
+	}
 }
