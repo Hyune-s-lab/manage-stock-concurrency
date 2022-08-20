@@ -27,20 +27,28 @@ class StockServiceTest {
 	@Autowired private StockLettuceLockFacade stockLettuceLockFacade;
 	@Autowired private StockRedissonLockFacade stockRedissonLockFacade;
 
-	@Autowired StockRepository stockRepository;
+	@Autowired private StockRepository stockRepository;
+
+	private final int threadCount = 300;
+	private final long productId = 10L;
+	private final long quantity = 1L;
+	private final long initQuantity = 300L;
+
+	private ExecutorService executorService;
+	private CountDownLatch countDownLatch;
 
 	@BeforeEach
 	public void beforeEach() {
-		stockRepository.save(new Stock(1L, 100L));
+		stockRepository.save(new Stock(productId, initQuantity));
+
+		executorService = Executors.newFixedThreadPool(threadCount);
+		countDownLatch = new CountDownLatch(threadCount);
 	}
 
 	@AfterEach
 	public void afterEach() {
 		stockRepository.deleteAll();
 	}
-
-	private final long productId = 1L;
-	private final long quantity = 1L;
 
 	@DisplayName("[v1] 재고 감소")
 	@Test
@@ -52,19 +60,16 @@ class StockServiceTest {
 
 		// then
 		final long afterQuantity = stockRepository.getByProductId(productId).getQuantity();
-		assertThat(afterQuantity).isEqualTo(99L);
+		assertThat(afterQuantity).isEqualTo(initQuantity - 1);
 	}
 
-	@DisplayName("[v1] 재고 감소 - 동시에 100개 요청")
+	@DisplayName("[v1] 재고 감소 - 동시에 300개 요청")
 	@Test
 	void stock_decreaseV1_concurrency() throws InterruptedException {
 		// given
-		final int threadCount = 100;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 
 		// when
-		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+		IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
 					try {
 						stockService.decreaseV1(productId, quantity);
 					} finally {
@@ -81,16 +86,13 @@ class StockServiceTest {
 		assertThat(afterQuantity).isNotZero();
 	}
 
-	@DisplayName("[v2] 재고 감소 - 동시에 100개 요청")
+	@DisplayName("[v2] 재고 감소 - syncronized")
 	@Test
 	void stock_decreaseV2() throws InterruptedException {
 		// given
-		final int threadCount = 100;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 
 		// when
-		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+		IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
 					try {
 						stockService.decreaseV2(productId, quantity);
 					} finally {
@@ -107,16 +109,13 @@ class StockServiceTest {
 		assertThat(afterQuantity).isZero();
 	}
 
-	@DisplayName("[v3] 재고 감소 - 동시에 100개 요청")
+	@DisplayName("[v3] 재고 감소 - pessimistic lock")
 	@Test
 	void stock_decreaseV3() throws InterruptedException {
 		// given
-		final int threadCount = 100;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 
 		// when
-		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+		IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
 					try {
 						stockService.decreaseV3(productId, quantity);
 					} finally {
@@ -133,16 +132,13 @@ class StockServiceTest {
 		assertThat(afterQuantity).isZero();
 	}
 
-	@DisplayName("[v4] 재고 감소 - 동시에 100개 요청")
+	@DisplayName("[v4] 재고 감소 - optimistic lock")
 	@Test
 	void stock_decreaseV4() throws InterruptedException {
 		// given
-		final int threadCount = 100;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 
 		// when
-		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+		IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
 					try {
 						stockOptimisticLockFacade.decreaseV4(productId, quantity);
 					} catch (final InterruptedException ex) {
@@ -161,16 +157,13 @@ class StockServiceTest {
 		assertThat(afterQuantity).isZero();
 	}
 
-	@DisplayName("[v5] 재고 감소 - 동시에 100개 요청")
+	@DisplayName("[v5] 재고 감소 - lettuce lock")
 	@Test
 	void stock_decreaseV5() throws InterruptedException {
 		// given
-		final int threadCount = 100;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 
 		// when
-		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+		IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
 					try {
 						stockLettuceLockFacade.decreaseV5(productId, quantity);
 					} catch (final InterruptedException ex) {
@@ -189,16 +182,13 @@ class StockServiceTest {
 		assertThat(afterQuantity).isZero();
 	}
 
-	@DisplayName("[v6] 재고 감소 - 동시에 100개 요청")
+	@DisplayName("[v6] 재고 감소 - redisson lock")
 	@Test
 	void stock_decreaseV6() throws InterruptedException {
 		// given
-		final int threadCount = 100;
-		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
-		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 
 		// when
-		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+		IntStream.range(0, threadCount).forEach(e -> executorService.submit(() -> {
 					try {
 						stockRedissonLockFacade.decreaseV6(productId, quantity);
 					} catch (final InterruptedException ex) {
