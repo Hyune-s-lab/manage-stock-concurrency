@@ -10,6 +10,7 @@ public class StockService {
 
 	private final StockRepository stockRepository;
 	private final StockPessimisticLockRepository stockPessimisticLockRepository;
+	private final StockOptimisticLockRepository stockOptimisticLockRepository;
 
 	/**
 	 * [v1] 재고 감소
@@ -35,6 +36,15 @@ public class StockService {
 	@Transactional
 	public void decreaseV3(final Long productId, final Long quantity) {
 		final Stock stock = stockPessimisticLockRepository.getByProductId(productId);
+		stock.decrease(quantity);
+	}
+
+	/**
+	 * [v4] 재고 감소 - optimistic lock
+	 */
+	@Transactional
+	public void decreaseV4(final Long productId, final Long quantity) {
+		final Stock stock = stockOptimisticLockRepository.getByProductId(productId);
 		stock.decrease(quantity);
 	}
 }

@@ -16,9 +16,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class StockServiceTest {
 
-
-	@Autowired
-	private StockService stockService;
+	@Autowired private StockService stockService;
+	@Autowired private OptimisticLockFacade optimisticLockFacade;
 
 	@Autowired StockRepository stockRepository;
 
@@ -112,6 +111,34 @@ class StockServiceTest {
 		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
 					try {
 						stockService.decreaseV3(productId, quantity);
+					} finally {
+						countDownLatch.countDown();
+					}
+				}
+		));
+
+		countDownLatch.await();
+
+		// then
+		final Long afterQuantity = stockRepository.getByProductId(productId).getQuantity();
+		System.out.println("### afterQuantity=" + afterQuantity);
+		assertThat(afterQuantity).isZero();
+	}
+
+	@DisplayName("[v4] 재고 감소 - 동시에 100개 요청")
+	@Test
+	void stock_decreaseV4() throws InterruptedException {
+		// given
+		final int threadCount = 100;
+		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+		// when
+		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+					try {
+						optimisticLockFacade.decreaseV4(productId, quantity);
+					} catch (final InterruptedException ex) {
+						throw new RuntimeException(ex);
 					} finally {
 						countDownLatch.countDown();
 					}
