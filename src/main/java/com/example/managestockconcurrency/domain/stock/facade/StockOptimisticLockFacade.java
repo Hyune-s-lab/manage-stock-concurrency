@@ -1,5 +1,6 @@
-package com.example.managestockconcurrency.domain.stock;
+package com.example.managestockconcurrency.domain.stock.facade;
 
+import com.example.managestockconcurrency.domain.stock.service.StockService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -7,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @RequiredArgsConstructor
 @Service
-public class OptimisticLockFacade {
+public class StockOptimisticLockFacade {
 
 	private final StockService stockService;
 

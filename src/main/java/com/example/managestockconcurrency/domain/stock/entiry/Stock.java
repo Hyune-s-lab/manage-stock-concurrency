@@ -1,4 +1,4 @@
-package com.example.managestockconcurrency.domain.stock;
+package com.example.managestockconcurrency.domain.stock.entiry;
 
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
