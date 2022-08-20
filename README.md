@@ -4,7 +4,7 @@
 
 ## 환경
 
-- Docker MySql
+- Docker MySql - port: 4306, schema: stock_concurrency
 
 ## 재고 감소 로직 개선
 
