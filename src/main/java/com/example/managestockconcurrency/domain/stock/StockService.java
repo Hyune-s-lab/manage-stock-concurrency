@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StockService {
 
 	private final StockRepository stockRepository;
+	private final StockPessimisticLockRepository stockPessimisticLockRepository;
 
 	/**
 	 * [v1] 재고 감소
@@ -26,5 +27,14 @@ public class StockService {
 		final Stock stock = stockRepository.getByProductId(productId);
 		stock.decrease(quantity);
 		stockRepository.saveAndFlush(stock);
+	}
+
+	/**
+	 * [v3] 재고 감소 - pessimistic lock
+	 */
+	@Transactional
+	public void decreaseV3(final Long productId, final Long quantity) {
+		final Stock stock = stockPessimisticLockRepository.getByProductId(productId);
+		stock.decrease(quantity);
 	}
 }

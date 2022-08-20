@@ -99,4 +99,30 @@ class StockServiceTest {
 		System.out.println("### afterQuantity=" + afterQuantity);
 		assertThat(afterQuantity).isZero();
 	}
+
+	@DisplayName("[v3] 재고 감소 - 동시에 100개 요청")
+	@Test
+	void stock_decreaseV3() throws InterruptedException {
+		// given
+		final int threadCount = 100;
+		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+		// when
+		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+					try {
+						stockService.decreaseV3(productId, quantity);
+					} finally {
+						countDownLatch.countDown();
+					}
+				}
+		));
+
+		countDownLatch.await();
+
+		// then
+		final Long afterQuantity = stockRepository.getByProductId(productId).getQuantity();
+		System.out.println("### afterQuantity=" + afterQuantity);
+		assertThat(afterQuantity).isZero();
+	}
 }
