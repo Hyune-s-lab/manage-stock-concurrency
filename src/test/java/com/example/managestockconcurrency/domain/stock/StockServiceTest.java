@@ -2,6 +2,10 @@ package com.example.managestockconcurrency.domain.stock;
 
 import static org.assertj.core.api.Assertions.*;
 
+import com.example.managestockconcurrency.domain.stock.entiry.Stock;
+import com.example.managestockconcurrency.domain.stock.facade.StockOptimisticLockFacade;
+import com.example.managestockconcurrency.domain.stock.repository.StockRepository;
+import com.example.managestockconcurrency.domain.stock.service.StockService;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -17,7 +21,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class StockServiceTest {
 
 	@Autowired private StockService stockService;
-	@Autowired private OptimisticLockFacade optimisticLockFacade;
+	@Autowired private StockOptimisticLockFacade stockOptimisticLockFacade;
 
 	@Autowired StockRepository stockRepository;
 
@@ -136,7 +140,7 @@ class StockServiceTest {
 		// when
 		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
 					try {
-						optimisticLockFacade.decreaseV4(productId, quantity);
+						stockOptimisticLockFacade.decreaseV4(productId, quantity);
 					} catch (final InterruptedException ex) {
 						throw new RuntimeException(ex);
 					} finally {

@@ -1,5 +1,9 @@
-package com.example.managestockconcurrency.domain.stock;
+package com.example.managestockconcurrency.domain.stock.service;
 
+import com.example.managestockconcurrency.domain.stock.entiry.Stock;
+import com.example.managestockconcurrency.domain.stock.repository.StockOptimisticLockRepository;
+import com.example.managestockconcurrency.domain.stock.repository.StockPessimisticLockRepository;
+import com.example.managestockconcurrency.domain.stock.repository.StockRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
