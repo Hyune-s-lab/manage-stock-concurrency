@@ -2,6 +2,10 @@ package com.example.managestockconcurrency.domain.stock;
 
 import static org.assertj.core.api.Assertions.*;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -42,5 +46,31 @@ class StockServiceTest {
 		// then
 		final long afterQuantity = stockRepository.getByProductId(productId).getQuantity();
 		assertThat(afterQuantity).isEqualTo(99L);
+	}
+
+	@DisplayName("[v1] 재고 감소 - 동시에 100개 요청")
+	@Test
+	void stock_decreaseV1_concurrency() throws InterruptedException {
+		// given
+		final int threadCount = 100;
+		final ExecutorService executorService = Executors.newFixedThreadPool(threadCount);
+		final CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+
+		// when
+		IntStream.range(0, 100).forEach(e -> executorService.submit(() -> {
+					try {
+						stockService.decreaseV1(productId, quantity);
+					} finally {
+						countDownLatch.countDown();
+					}
+				}
+		));
+
+		countDownLatch.await();
+
+		// then
+		final Long afterQuantity = stockRepository.getByProductId(productId).getQuantity();
+		System.out.println("### afterQuantity=" + afterQuantity);
+		assertThat(afterQuantity).isNotZero();
 	}
 }
