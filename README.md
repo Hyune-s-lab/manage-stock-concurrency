@@ -13,7 +13,7 @@
 
 - 테스트 케이스에서는 version 충돌이 많기에 optimistic lock 이 느립니다.
 
-## 재고 감소 로직 기본
+## 재고 감소 기본
 
 > StockService
 
@@ -66,7 +66,7 @@
 
 - lucette 는 Spring Data Redis 에서 인터페이스를 제공하기에 별도의 학습이 필요하지 않습니다.
     - 하지만 redisson 은 별도의 인터페이스이기에 학습이 필요 합니다.
-- lock 획득 실패 시 재시도가 필요하지 않은 경우는 luttuce 를, 재시도가 필요한 경우는 redisson 활용을 권장합니다.
+- 업무 성격상 lock 획득 실패 시 재시도가 필요하지 않은 경우는 luttuce 를, 재시도가 필요한 경우는 redisson 활용을 권장합니다.
 
 ## 참고 자료
 
